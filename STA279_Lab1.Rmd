@@ -1,0 +1,149 @@
+---
+title: "STA279_Lab1"
+author: "Sherry Mao"
+date: "2/3/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+```
+
+```{r}
+grad_app <- read.csv("https://stats.idre.ucla.edu/stat/data/binary.csv")
+```
+
+
+
+## Question 1
+
+```{r}
+library(tidyverse)
+glimpse(grad_app)
+```
+
+(Type your answer to question 1 here)
+400 students are in the data. 
+
+## Question 2
+
+```{r}
+grad_app_no_na <- grad_app %>%
+  drop_na()
+glimpse(grad_app_no_na)
+```
+
+(Type your answer to question 2 here)
+400 students are in grad_app_no_na. There are no missing values in the original data because the students stay 400 after dropping NAs.
+
+## Question 3
+
+```{r}
+grad_app_prestigious <- grad_app %>%
+  filter(rank == 1)
+glimpse(grad_app_prestigious)
+```
+
+(Type your answer to question 3 here)
+There are 61 students attended the most prestigious school. 
+
+## Question 4
+
+```{r}
+grad_app %>%
+  ggplot(aes(x = admit)) +
+  geom_bar() +
+  labs(x = "Accepted to grad school?",
+       title = "Bar chart of grad school acceptance") +
+  theme_bw()
+```
+
+## Question 5
+
+```{r}
+grad_app %>%
+  ggplot(aes(x = gpa)) +
+  geom_histogram() +
+  labs(x = "GPA of applicants",
+       title = "Histogram of grad school applicants") +
+  theme_bw()
+```
+
+(Type your answer to question 5 here)
+
+
+## Question 6
+
+```{r}
+grad_app %>%
+  summarize(standard_deviation_gpa = sd(gpa),
+            mean_gpa = mean(gpa))
+```
+
+
+## Question 7
+
+```{r}
+class(grad_app$admit)
+```
+
+(Type your answer to question 7 here)
+The admit is an integer variable. 
+
+
+## Question 8
+
+```{r}
+#mutate function modifies column to create new column
+grad_app <- grad_app %>%
+  mutate(admit = as.factor(admit))
+class(grad_app$admit)
+#side by side boxplot between acceptance and gpa
+grad_app %>%
+  ggplot(aes(x = admit, y = gpa)) +
+  geom_boxplot() +
+  labs(x = "Acceptance to grad school",
+       y = "GPA",
+       title = "Acceptance to grad school versus GPA") +
+  theme_bw()
+```
+
+
+## Question 9
+
+```{r}
+#group_by function
+grad_app %>%
+  group_by(admit) %>%
+  summarize(median_gre = median(gre),
+            iqr_gre = IQR(gre))
+#mean and sd
+grad_app %>%
+  group_by(admit) %>%
+  summarize(mean_gre = mean(gpa),
+            sd_gre = sd(gpa))
+```
+
+
+## Question 10
+
+(Type your answer to question 10 here)
+There is a strong positive correlation between students gpa and acceptance to grad schools. 
+
+
+## Question 11
+
+```{r}
+table(grad_app$rank, grad_app$admit)
+```
+
+(Type your answer to question 11 here)
+probability: 33/61 = 0.54
+odds: 0.54/(1-0.54) = 1.17
+
+
