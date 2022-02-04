@@ -1,0 +1,141 @@
+---
+title: "Lab 2"
+author: "Sherry Mao"
+output:
+  html_document: default
+  pdf_document: default
+editor_options:
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+titanic <- read.csv("https://sta279-s22.github.io/labs/Titanic.csv")
+```
+
+#### Question 1
+
+I think Passengers, Name and Survived should not be used as explainatory variable. Survived should be response variable. The Name of the passengers and passenger ID are not associated to whether passengers survived, so they do not have predictive value. 
+
+## Question 2
+```{r}
+library(tidyverse)
+glimpse(titanic)
+titanic<-titanic %>% 
+  drop_na()
+glimpse(titanic)
+```
+There is missing data in the original titanic dataset, with 891 rows in the original dataset. There are 714 rows left in the titanic dataset after removing the missing value. 
+
+## Question 3
+```{r}
+titanic %>%
+  count(titanic$Survived) %>%
+  knitr::kable(caption="Survived from Titanic")
+```
+
+
+## Question 4
+The chance of surviving is different for every person in the ship. Passengers identities might contribute, women or children might get into the living boats first. The relative placement of passengers on the ship also matters. 
+
+
+## Question 5
+```{r}
+logodds_plot <- function(data, num_bins, bin_method,
+                         x, y, reg_formula = y ~ x){
+  
+  if(bin_method == "equal_size"){
+    logodds_table <- data.frame(x = data[,x], 
+                                y = data[,y]) %>%
+      drop_na() %>%
+      arrange(x) %>%
+      mutate(obs = y,
+             bin = rep(1:num_bins,
+                 each=ceiling(nrow(data)/num_bins))[1:nrow(data)]) %>%
+      group_by(bin) %>%
+      summarize(mean_x = mean(x),
+                prop = mean(c(obs, 0.5)),
+                num_obs = n()) %>%
+      ungroup() %>%
+      mutate(logodds = log(prop/(1 - prop)))
+  } else {
+    logodds_table <- data.frame(x = data[,x], 
+                                y = data[,y]) %>%
+      drop_na() %>%
+      mutate(obs = y,
+             bin = cut(x, 
+                       breaks = num_bins,
+                       labels = F)) %>%
+      group_by(bin) %>%
+      summarize(mean_x = mean(x),
+                prop = mean(c(obs, 0.5)),
+                num_obs = n()) %>%
+      ungroup() %>%
+      mutate(logodds = log(prop/(1 - prop)))
+  }
+  
+  logodds_table %>%
+    ggplot(aes(x = mean_x,
+               y = logodds)) +
+    geom_point(size=2) +
+    geom_smooth(se=F, method="lm", formula = reg_formula) +
+    theme_bw() +
+    labs(x = x,
+         y = "Empirical log odds") +
+    theme(text = element_text(size=20))
+}
+```
+
+```{r}
+logodds_plot(titanic, 30, "equal_size", "Fare", "Survived",
+             reg_formula = y ~ x)
+```
+I don't feel comfortable claiming the graph is linear because there are many points float above the linear lines between Fare = 0 to Fare = 100. There are also many points flow below the line between Fare = 0 and Fare = 50. Overall, the points appear to form a curve. 
+
+## Question 6
+```{r}
+logodds_plot(titanic, 30, "equal_size", "Fare", "Survived",
+             reg_formula = y ~ log(x))
+```
+I choose logodds_plot, and this looks like a better fit than linear shape. 
+
+
+## Question 7
+$$\widehat{\beta}_1$$
+
+$$Y_i \sim Bernoulli(\pi_i)$$
+
+$$\log\left(\dfrac{\pi_i}{1-\pi_i}\right) = \beta_0 + \beta_1 log(Fare_i)$$
+
+## Question 8
+$$log\left(\dfrac{\widehat{\pi}_i}{1-\widehat{\pi}_i}\right) = -0.8968 + 0.0160 log(Fare_i)$$
+```{r}
+#fit a generalized linear model
+glm(Survived ~ Fare, family = binomial, data = titanic)
+```
+
+## Question 9
+The deviance is 901.3, log likelihood is -450.65
+
+# Question 10
+$$log\left(\dfrac{\widehat{\pi}_i}{1-\widehat{\pi}_i}\right) = -0.8968 + 0.0160 log(100)=-0.8648 $$
+$$e^{-0.8648} = \frac{\pi}{1-\pi} $$
+$$\pi = 0.296338 $$
+The predicted probability of survival for somebody who paid $100 for their tickets is 0.296338
+
+## Question 11
+Null Hypothesis: $$\beta_1 = 0$$
+Alternative Hypothesis: $$\beta_1 \ne 0 $$
+```{r}
+model<-glm(Survived ~ Fare, family = binomial, data = titanic)
+summary(model)
+```
+
+$$Drop In Deviance = 63.27$$
+```{r}
+pchisq(13.92, df = 1, lower.tail=FALSE)
+```
+Since, p = 0.0001907579, the data provides strong evidence of a relationship between Fare and the probability of survival. 
+
+
